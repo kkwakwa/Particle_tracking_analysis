@@ -3,6 +3,10 @@
 Created on Wed Sep  5 16:43:40 2018
 
 @author: kkwakwa
+
+This is a library of functions for importing standardised track data (from
+either TrackPy or MATLABTrack), filtering it by track length, calculating the
+important track statistics and plotting the data.
 """
 
 import numpy as np
@@ -57,7 +61,7 @@ def calculate_segments(spots):
     tracklengths = pd.value_counts(spots['track_no'])
     seglength = len(spots)-len(tracklengths)
     segs = np.zeros((seglength,6))
-    
+
     counter = 0
     spotgroup = spots.groupby(['track_no'])
     for name, group in spotgroup:
@@ -74,7 +78,7 @@ def calculate_segments(spots):
         segs[start:stop,2] = ids[1:]
         segs[start:stop,3:5] = diffvals
         segs[start:stop,5] = np.sqrt(diffvals[:,0]**2 + diffvals[:,1]**2)
-        
+
     segments = pd.DataFrame(segs, columns=['track_no',
                                                           'start_spot',
                                                           'end_spot',

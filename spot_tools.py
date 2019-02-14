@@ -4,7 +4,9 @@ Created on Fri Aug 31 12:36:58 2018
 
 @author: kkwakwa
 
-This is a series of functions for importing spot data(currently from ThunderSTORM)
+This is a series of functions for importing spot data(currently from
+ThunderSTORM), filtering out spots with based on sigma and uncertainty, and then
+plotting out spot statistics
 
 """
 
@@ -20,33 +22,33 @@ def readThunderStorm(filename):
     using a standardised header format
     '''
     spotdata = pd.read_csv(filename, index_col=0, usecols=['id', 'frame', 'x [nm]',
-                                                           'y [nm]', 'sigma [nm]', 
+                                                           'y [nm]', 'sigma [nm]',
                                                            'intensity [photon]',
                                                            'uncertainty_xy [nm]'])
-    spotdata = spotdata.rename(index=str, columns={'x [nm]':'x', 'y [nm]':'y', 
-                                                   'sigma [nm]':'sigma', 
-                                                   'intensity [photon]':'intensity', 
+    spotdata = spotdata.rename(index=str, columns={'x [nm]':'x', 'y [nm]':'y',
+                                                   'sigma [nm]':'sigma',
+                                                   'intensity [photon]':'intensity',
                                                    'uncertainty_xy [nm]':'uncertainty'})
     return spotdata
 
 
 def filter_spots(spotdata, sigma_min=50, sigma_max=250, unc_min=5, unc_max=65):
     '''
-    Takes a (hopefully standardised) Pandas dataframe of spot data and returns 
-    it filtered by sigma and uncertainty. 
+    Takes a (hopefully standardised) Pandas dataframe of spot data and returns
+    it filtered by sigma and uncertainty.
     '''
-    filteredspots = spotdata.loc[(spotdata['sigma']>sigma_min) & 
-                                 (spotdata['sigma']<sigma_max) & 
-                                 (spotdata['uncertainty']>unc_min) & 
+    filteredspots = spotdata.loc[(spotdata['sigma']>sigma_min) &
+                                 (spotdata['sigma']<sigma_max) &
+                                 (spotdata['uncertainty']>unc_min) &
                                  (spotdata['uncertainty']<unc_max)]
     return(filteredspots)
-    
+
 
 '''
-Functions for plotting your spot data in potentially useful ways    
+Functions for plotting your spot data in potentially useful ways
 '''
-    
-    
+
+
 def plotspottimes(spotdata):
     '''
     Takes a (hopefully standardised) Pandas dataframe of spot data and returns
@@ -62,11 +64,11 @@ def plotspottimes(spotdata):
     #plt.show()
     return f
 
-    
+
 def plotspotstats(spotdata):
     '''
     Takes a (hopefully standardised) Pandas dataframe of spot data and plots
-    the distributions of sigma, uncertainty and intensity. The plots also 
+    the distributions of sigma, uncertainty and intensity. The plots also
     include the median value of each of those.
     '''
     f = plt.figure(figsize=(10,3))
