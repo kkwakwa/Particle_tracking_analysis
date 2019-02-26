@@ -50,17 +50,29 @@ def filter_tracks(tracklist, tracklength=5):
     return filteredtracks
 
 
+def MSDcalc(xypos):
+    steps = len(xypos) -1
+    scratch = np.zeros((steps, steps))
+    for i in range(steps):
+        if i ==0:
+            scratch[:,i] = ((xypos[i,:] - xypos[i+1:,:])**2).sum(axis=1)
+        else:
+            scratch[:-i,i] = ((xypos[i,:] - xypos[i+1:,:])**2).sum(axis=1)
+    freescratch = (np.ma.average(np.ma.masked_where(scratch == 0., scratch), axis=1)).data
+    return freescratch
+
+
 def calculate_segments(spots):
     '''
     Takes in a standardised(I hope) pandas dataframe containing information about
     the spots in track data and returns a new dataframe with per-segment track
     information. The new dataframe is fomatted:
 
-    |track_no|start_spot|end_spot|x_displacement|y_displacement|abs_displacement|
+    |track_no|start_frame|start_spot|end_spot|x_displacement|y_displacement|abs_displacement|MSDs|
     '''
     tracklengths = pd.value_counts(spots['track_no'])
     seglength = len(spots)-len(tracklengths)
-    segs = np.zeros((seglength,6))
+    segs = np.zeros((seglength, 8))
 
     counter = 0
     spotgroup = spots.groupby(['track_no'])
@@ -68,36 +80,27 @@ def calculate_segments(spots):
         start = counter
         counter = counter + len(group) - 1
         stop = counter
-        vals = group[['x','y']].values
+        vals = group[['x', 'y']].values
         ids = group.index.values
 
         diffvals = np.diff(vals, axis=0)
 
-        segs[start:stop,0] = name
-        segs[start:stop,1] = ids[:-1]
-        segs[start:stop,2] = ids[1:]
-        segs[start:stop,3:5] = diffvals
-        segs[start:stop,5] = np.sqrt(diffvals[:,0]**2 + diffvals[:,1]**2)
+        segs[start:stop, 0] = name
+        segs[start:stop, 1] = group['frame'].values[:-1]
+        segs[start:stop, 2] = ids[:-1]
+        segs[start:stop, 3] = ids[1:]
+        segs[start:stop, 4:5] = diffvals
+        segs[start:stop, 6] = np.sqrt(diffvals[:, 0]**2 + diffvals[:, 1]**2)
+        segs[start:stop, 7] = MSDcalc(vals)
 
     segments = pd.DataFrame(segs, columns=['track_no',
                                                           'start_spot',
                                                           'end_spot',
                                                           'x_displacement',
                                                           'y_displacement',
-                                                          'abs_displacement'])
+                                                          'abs_displacement',
+                                                          'MSDs'])
     return segments
-
-
-def MSDcalc(xypos):
-    steps = len(xypos)//2
-    scratch = np.zeros((steps, steps))
-    for i in range(steps):
-        if i ==0:
-            scratch[:,i] = ((freespots[i,:] - freespots[i+1:,:])**2).sum(axis=1)
-        else:
-            scratch[:-i,i] = ((freespots[i,:] - freespots[i+1:,:])**2).sum(axis=1)
-    freescratch = (np.ma.average(np.ma.masked_where(scratch == 0., scratch), axis=1)).data
-    return freescratch
 
 
 def calculate_tracks(segments):
@@ -113,6 +116,7 @@ def calculate_tracks(segments):
     tracks = pd.DataFrame(np.zeros((len(tracklengths), 3)), columns=['track_no',
                                                             'no_segments',
                                                             'mean_displacement'])
+
     tracks['track_no'] = pd.value_counts(segments['track_no']).sort_index().index
     tracks['no_segments'] = tracklengths.values
     tracks['mean_displacement'] = segments.groupby(['track_no'])['abs_displacement'].mean().values
