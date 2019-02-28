@@ -25,8 +25,9 @@ def track_convert(filteredspots, dist=500):
     '''
     tracks = tp.link(filteredspots, search_range=dist, pos_columns=['x', 'y'],
                      t_column='frame')
-    tracks = tracks.rename(index=str, columns={'particle':'track_no'})
+    tracks = tracks.rename(index=str, columns={'particle': 'track_no'})
     return tracks
+
 
 def read_MATLABtrack(filename):
     '''
@@ -41,8 +42,9 @@ def read_MATLABtrack(filename):
 
 def filter_tracks(tracklist, tracklength=5):
     '''
-    takes a Pandas dataframe of single particle tracking data and filters
-    it by minimum track length, returning the same dataframe, but with longer tracks
+    Takes a Pandas dataframe of single particle tracking data and filters
+    it by minimum track length, returning the same dataframe, but with longer
+    tracks
     '''
     tracklengths = pd.value_counts(tracklist['track_no'])
     tracklengths = tracklengths.loc[tracklengths > tracklength]
@@ -51,22 +53,28 @@ def filter_tracks(tracklist, tracklength=5):
 
 
 def MSDcalc(xypos):
-    steps = len(xypos) -1
+    '''
+    Takes a two column numpy array where the first column is all particle
+    x-positions and the second column is particle y-positions, returns a single
+    column one step shorter than the column length of the input column. Each
+    position in that column is the MSD step for that length
+    '''
+    steps = len(xypos) - 1
     scratch = np.zeros((steps, steps))
     for i in range(steps):
-        if i ==0:
-            scratch[:,i] = ((xypos[i,:] - xypos[i+1:,:])**2).sum(axis=1)
+        if i == 0:
+            scratch[:, i] = ((xypos[i, :] - xypos[i+1:, :])**2).sum(axis=1)
         else:
-            scratch[:-i,i] = ((xypos[i,:] - xypos[i+1:,:])**2).sum(axis=1)
+            scratch[:-i, i] = ((xypos[i, :] - xypos[i+1:, :])**2).sum(axis=1)
     freescratch = (np.ma.average(np.ma.masked_where(scratch == 0., scratch), axis=1)).data
     return freescratch
 
 
 def calculate_segments(spots):
     '''
-    Takes in a standardised(I hope) pandas dataframe containing information about
-    the spots in track data and returns a new dataframe with per-segment track
-    information. The new dataframe is fomatted:
+    Takes in a standardised(I hope) pandas dataframe containing information
+    about the spots in track data and returns a new dataframe with per-segment
+    track information. The new dataframe is fomatted:
 
     |track_no|start_frame|start_spot|end_spot|x_displacement|y_displacement|abs_displacement|MSDs|
     '''
@@ -89,17 +97,18 @@ def calculate_segments(spots):
         segs[start:stop, 1] = group['frame'].values[:-1]
         segs[start:stop, 2] = ids[:-1]
         segs[start:stop, 3] = ids[1:]
-        segs[start:stop, 4:5] = diffvals
+        segs[start:stop, 4:6] = diffvals
         segs[start:stop, 6] = np.sqrt(diffvals[:, 0]**2 + diffvals[:, 1]**2)
         segs[start:stop, 7] = MSDcalc(vals)
 
     segments = pd.DataFrame(segs, columns=['track_no',
-                                                          'start_spot',
-                                                          'end_spot',
-                                                          'x_displacement',
-                                                          'y_displacement',
-                                                          'abs_displacement',
-                                                          'MSDs'])
+                                           'start_frame',
+                                           'start_spot',
+                                           'end_spot',
+                                           'x_displacement',
+                                           'y_displacement',
+                                           'abs_displacement',
+                                           'MSDs'])
     return segments
 
 
@@ -138,10 +147,10 @@ def plot_segment_stats(segments):
     fig.suptitle('{} track segments'.format(len(segments)), fontsize=14)
     ax1 = fig.add_subplot(1, 3, 1)
     ax1.hist(segments["x_displacement"], bins=100, color='b', alpha=0.5,
-                                                            density=True)
+                                                            density= True)
     ax1.set_title('Standard Deviation = {:.2f}'.format(segments['x_displacement'].std()))
     ax1.set_xlabel('x-displacement(nm)')
-    ax2 = fig.add_subplot(1,3,2)
+    ax2 = fig.add_subplot(1, 3, 2)
     ax2.hist(segments["y_displacement"], bins=100, color='g', alpha=0.5, density=True)
     ax2.set_title('Standard Deviation = {:.2f}'.format(segments['y_displacement'].std()))
     ax2.set_xlabel("y-displacement(nm)")
