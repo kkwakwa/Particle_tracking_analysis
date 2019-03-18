@@ -13,6 +13,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import trackpy as tp
+from scipy.stats import linregress
 
 
 def track_convert(filteredspots, dist=500):
@@ -70,17 +71,39 @@ def MSDcalc(xypos):
     return freescratch
 
 
+def MSD_fit(values, time=0.03):
+    val_length = len(values//2)
+    slope, intercept, r_value, p_value, std_err = linregress(np.log(np.arange(1, val_length+1)*time), np.log(values[:val_length]))
+    return slope
+
+
+def odist(xypos):
+    '''
+    takes a two column numpy array where the first column is particle
+    x-positions and the second column is particle y-positions.
+    
+    Returns a single column that is one step shorter than the input column.
+    Each position is a measure of the square of the length of displacement from
+    the starting position
+    '''
+
+    return((xypos[-1, :] - xypos[:-1, :])**2).sum(axis=1)
+    
+    
+
+
 def calculate_segments(spots):
     '''
     Takes in a standardised(I hope) pandas dataframe containing information
     about the spots in track data and returns a new dataframe with per-segment
     track information. The new dataframe is fomatted:
 
-    |track_no|start_frame|start_spot|end_spot|x_displacement|y_displacement|abs_displacement|MSDs|
+    |track_no|start_frame|start_spot|end_spot|x_displacement|y_displacement|
+    abs_displacement|MSDs|origin_dist|
     '''
     tracklengths = pd.value_counts(spots['track_no'])
     seglength = len(spots)-len(tracklengths)
-    segs = np.zeros((seglength, 8))
+    segs = np.zeros((seglength, 9))
 
     counter = 0
     spotgroup = spots.groupby(['track_no'])
@@ -100,6 +123,7 @@ def calculate_segments(spots):
         segs[start:stop, 4:6] = diffvals
         segs[start:stop, 6] = np.sqrt(diffvals[:, 0]**2 + diffvals[:, 1]**2)
         segs[start:stop, 7] = MSDcalc(vals)
+        segs[start:stop, 8] = odist(vals)
 
     segments = pd.DataFrame(segs, columns=['track_no',
                                            'start_frame',
@@ -108,7 +132,8 @@ def calculate_segments(spots):
                                            'x_displacement',
                                            'y_displacement',
                                            'abs_displacement',
-                                           'MSDs'])
+                                           'MSDs',
+                                           'origin_dist'])
     return segments
 
 
@@ -122,13 +147,19 @@ def calculate_tracks(segments):
     We are still sorting out MSD, so for now I'll skip it
     '''
     tracklengths = pd.value_counts(segments['track_no'])
-    tracks = pd.DataFrame(np.zeros((len(tracklengths), 3)), columns=['track_no',
+    tracks = pd.DataFrame(np.zeros((len(tracklengths), 4)), columns=['track_no',
                                                             'no_segments',
-                                                            'mean_displacement'])
+                                                            'mean_displacement',
+                                                            'MSD'])
 
     tracks['track_no'] = pd.value_counts(segments['track_no']).sort_index().index
     tracks['no_segments'] = tracklengths.values
     tracks['mean_displacement'] = segments.groupby(['track_no'])['abs_displacement'].mean().values
+    msdfits = []
+    for name, group in segments.groupby(['track_no']):
+        msds = group['MSDs'].values
+        msdfits.append(MSD_fit(msds))
+    tracks['MSD'] = msdfits
     return(tracks)
 
 
