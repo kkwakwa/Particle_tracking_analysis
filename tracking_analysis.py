@@ -8,9 +8,10 @@ This is a library of supporting data analysis tools that we will need for spot
 tracking data analysis
 """
 
+import numpy as np
 from scipy.optimize import curve_fit
 from scipy.stats import linregress
-import numpy as np
+
 
 
 def gaussian(x, amp, cen, wid):
@@ -29,3 +30,4 @@ def MSD_fit(values, time=0.03):
     val_length = len(values//2)
     slope, intercept, r_value, p_value, std_err = linregress(np.log(np.arange(1, val_length+1)*0.3), np.log(values[:val_length] * 1e-6))
     return slope
+

@@ -81,15 +81,13 @@ def odist(xypos):
     '''
     takes a two column numpy array where the first column is particle
     x-positions and the second column is particle y-positions.
-    
+
     Returns a single column that is one step shorter than the input column.
     Each position is a measure of the square of the length of displacement from
     the starting position
     '''
 
     return((xypos[-1, :] - xypos[:-1, :])**2).sum(axis=1)
-    
-    
 
 
 def calculate_segments(spots):
@@ -143,24 +141,35 @@ def calculate_tracks(segments):
     about the spots in track data and returns a new dataframe with per-track
     information. The new dataframe is fomatted
 
-    |particle|no_segments|mean_displacement|MSD|
+    |particle|start_frame|no_segments|mean_displacement|MSD|
     We are still sorting out MSD, so for now I'll skip it
     '''
     tracklengths = pd.value_counts(segments['track_no'])
-    tracks = pd.DataFrame(np.zeros((len(tracklengths), 4)), columns=['track_no',
-                                                            'no_segments',
-                                                            'mean_displacement',
-                                                            'MSD'])
-
-    tracks['track_no'] = pd.value_counts(segments['track_no']).sort_index().index
-    tracks['no_segments'] = tracklengths.values
-    tracks['mean_displacement'] = segments.groupby(['track_no'])['abs_displacement'].mean().values
-    msdfits = []
-    for name, group in segments.groupby(['track_no']):
-        msds = group['MSDs'].values
-        msdfits.append(MSD_fit(msds))
-    tracks['MSD'] = msdfits
-    return(tracks)
+    counter = 0
+    tracks = np.zeros((len(tracklengths), 6))
+    seggroup = segments.groupby('track_no')
+    
+    for name, group in seggroup:
+        tracks[counter, 0] = name
+        tracks[counter, 1] = len(group)
+        tracks[counter, 2] = group['start_frame'].min()
+        tracks[counter, 3] = group['abs_displacement'].mean()
+        tracks[counter, 4] = MSD_fit(group['MSDs'].values)
+        temps = np.where(np.sqrt(group['origin_dist'].values) <= 70)
+        if len(temps[0]) == 0:
+            tracks[counter, 5] = np.NaN
+        else:
+            tracks[counter, 5] = ((temps[0][0] +1) *0.03 )
+        counter += 1
+    
+    
+    finaltracks = pd.DataFrame(tracks, columns=['track_no',
+                                                'no_segments',
+                                                'start_frame',
+                                                'mean_displacement',
+                                                'MSD',
+                                                'insertion_time'])
+    return(finaltracks)
 
 
 '''

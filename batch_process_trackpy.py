@@ -12,7 +12,7 @@ import spot_tools as spt
 import tracking_tools as trt
 from glob import glob
 
-directory = 'C:/Data/Fluorescence/Me/2019_01_30/'
+directory = 'D:/Data/Fluorescence/Kwasi/2019_04_16/'
 search = '**/*_ts.csv'
 
 
@@ -54,7 +54,7 @@ for file in filelist:
     spotcount.savefig(spotdatafile, dpi=300, frameon=True)
     spotfig.savefig(spotplotfile, dpi=300, frameon=True)
     segmentfig.savefig(segplotfile, dpi=300, frameon=True)
-    segmentstats.to_csv(segdatafile)
+#    segmentstats.to_csv(segdatafile)
     trackfig.savefig(trackplotfile, dpi=300, frameon=True)
     print('Done!')
     

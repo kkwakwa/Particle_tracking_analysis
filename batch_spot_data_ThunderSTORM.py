@@ -9,7 +9,7 @@ import spot_tools as spt
 from glob import glob
 
 
-directory = 'D:/Data/Fluorescence/Kwasi/2018_12_21/'
+directory = 'D:/Data/Fluorescence/Kwasi/2019_04_16/'
 search = '**/*_ts.csv'
 
 
