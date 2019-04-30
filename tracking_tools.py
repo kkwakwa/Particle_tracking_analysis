@@ -256,7 +256,6 @@ def plot_msds(tracks, time=0.015):
     ax1.loglog(*drawlines, color='0.2', linewidth=0.5, alpha=0.1)
     ax1.set_xlabel('time(s)')
     ax1.set_ylabel('Mean Squared Displacement($\mu$m$^{2}$)')
-    ax1.set_title('labelled MWT')
     fig.tight_layout()
     return fig
 
