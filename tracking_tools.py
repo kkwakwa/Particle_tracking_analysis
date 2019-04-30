@@ -148,21 +148,21 @@ def calculate_tracks(segments):
     counter = 0
     tracks = np.zeros((len(tracklengths), 6))
     seggroup = segments.groupby('track_no')
-    
+
     for name, group in seggroup:
         tracks[counter, 0] = name
         tracks[counter, 1] = len(group)
         tracks[counter, 2] = group['start_frame'].min()
         tracks[counter, 3] = group['abs_displacement'].mean()
-        tracks[counter, 4] = MSD_fit(group['MSDs'].values)
+        tracks[counter, 4] = MSD_fit(group['MSDs'].values, time=0.015)
         temps = np.where(np.sqrt(group['origin_dist'].values) <= 70)
         if len(temps[0]) == 0:
             tracks[counter, 5] = np.NaN
         else:
-            tracks[counter, 5] = ((temps[0][0] +1) *0.03 )
+            tracks[counter, 5] = ((temps[0][0] +1) *0.015 )
         counter += 1
-    
-    
+
+
     finaltracks = pd.DataFrame(tracks, columns=['track_no',
                                                 'no_segments',
                                                 'start_frame',
@@ -187,7 +187,7 @@ def plot_segment_stats(segments):
     fig.suptitle('{} track segments'.format(len(segments)), fontsize=14)
     ax1 = fig.add_subplot(1, 3, 1)
     ax1.hist(segments["x_displacement"], bins=100, color='b', alpha=0.5,
-                                                            density= True)
+                                                            density=True)
     ax1.set_title('Standard Deviation = {:.2f}'.format(segments['x_displacement'].std()))
     ax1.set_xlabel('x-displacement(nm)')
     ax2 = fig.add_subplot(1, 3, 2)
@@ -209,17 +209,51 @@ def plot_track_stats(tracks):
     Takes a standardised Pandas dataframe containing per-track information
     and plots a histogram of the mean displacements
     '''
-    fig = plt.figure(figsize=(7, 3))
+    fig = plt.figure(figsize=(10, 3))
     fig.suptitle('{} tracks'.format(len(tracks)), fontsize=14)
-    ax1 = fig.add_subplot(1, 2, 1)
+    ax1 = fig.add_subplot(1, 3, 1)
     ax1.hist(tracks['mean_displacement'], bins=100, color='g', alpha=0.5, density=True)
     ax1.set_xlabel('Mean Displacement(nm)')
     ax1.set_title('Median = {:.2f}'.format(tracks['mean_displacement'].median()))
-    ax2 = fig.add_subplot(1, 2, 2)
+    ax2 = fig.add_subplot(1, 3, 2)
     ax2.hist(tracks['no_segments'], bins=100, color='b', alpha=0.5, density=True)
     ax2.set_xlabel('Track lengths(no.of spots)')
     ax2.set_title('Median = {:.2f}'.format(tracks['no_segments'].median()))
+    ax3 = fig.add_subplot(1, 3, 3)
+    ax3.hist(tracks['MSD'], bins=100, color='g', alpha=0.6, density=True)
+    ax3.set_xlabel('MSD fit($\mu m^2$/sec)')
     fig.tight_layout()
     plt.subplots_adjust(top=0.8)
     # plt.show()
+    return fig
+
+
+def plot_msd_dist(tracks):
+    '''
+    Takes a standardised Pandas dataframe containing per-track information
+    and plots a histogram of the MSD
+    '''
+    fig = plt.figure(figsize=(10, 6))
+    plt.hist(tracks['MSD'], bins=100, color='g', alpha=0.6, density=True)
+    plt.xlabel('MSD fit($\mu m^2$/sec)')
+    plt.tight_layout()
+    return fig
+
+def plot_msds(tracks):
+    '''
+    Takes a standardised Pandas dataframe containing per-track information and
+    plots each individual MSD
+    '''
+    drawlines = []
+    tracksgroup = tracks.groupby("track_no")
+    fig = plt.figure(figsize=(10, 6))
+    ax1 = fig.add_subplot(1, 1, 1)
+    for name, group in tracksgroup:
+        drawlines.append(np.arange(1, len(group["MSDs"].values)+1)*0.03)
+        drawlines.append(group["MSDs"].values * 1e-6)
+    ax1.loglog(*drawlines, color='0.2', linewidth=0.5, alpha=0.1)
+    ax1.set_xlabel('time(s)')
+    ax1.set_ylabel('Mean Squared Displacement($\mu$m$^{2}$)')
+    ax1.set_title('labelled MWT')
+    fig.tight_layout()
     return fig
