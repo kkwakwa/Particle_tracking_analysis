@@ -135,7 +135,7 @@ def calculate_segments(spots):
     return segments
 
 
-def calculate_tracks(segments):
+def calculate_tracks(segments, time=0.015):
     '''
     Takes in a standardised(I hope) pandas dataframe containing information
     about the spots in track data and returns a new dataframe with per-track
@@ -154,12 +154,12 @@ def calculate_tracks(segments):
         tracks[counter, 1] = len(group)
         tracks[counter, 2] = group['start_frame'].min()
         tracks[counter, 3] = group['abs_displacement'].mean()
-        tracks[counter, 4] = MSD_fit(group['MSDs'].values, time=0.015)
+        tracks[counter, 4] = MSD_fit(group['MSDs'].values, time=time)
         temps = np.where(np.sqrt(group['origin_dist'].values) <= 70)
         if len(temps[0]) == 0:
             tracks[counter, 5] = np.NaN
         else:
-            tracks[counter, 5] = ((temps[0][0] +1) *0.015 )
+            tracks[counter, 5] = ((temps[0][0] +1) * time)
         counter += 1
 
 
@@ -260,6 +260,24 @@ def plot_msds(tracks, time=0.015):
     return fig
 
 
+def plot_final_position_dist(tracks):
+    '''
+    Takes a standardised Pandas dataframe containing per-track information
+    and plots a histogram of the MSD
+    '''
+    inserttvals = tracks['insertion_time'].values
+    inserttvals = inserttvals[~np.isnan(inserttvals)]
+    insertion_ratio = tracks['insertion_time'].isna().sum()/len(tracks['insertion_time'])
+
+    fig = plt.figure(figsize=(10, 4))
+    ax1 = fig.add_subplot(1, 1, 1)
+    ax1.hist(inserttvals, bins=50, color='b', alpha=0.3, density=True)
+    ax1.set_xlabel('time to insertion(s)')
+    ax1.set_title('{:.2f}% tracks inserted'.format(insertion_ratio))
+    fig.tight_layout()
+    return fig
+
+
 def plot_final_positions(tracks, time=0.015):
     '''
     Takes a standardised Pandas dataframe containing per-track information and
@@ -277,6 +295,5 @@ def plot_final_positions(tracks, time=0.015):
     ax1.plot(*drawlines, color='0.6', linewidth=0.5, alpha=0.5)
     ax1.set_xlabel('time since appearance(s)')
     ax1.set_ylabel('Distance from final step($nm$)')
-    ax1.set_title("Labelled GFP-TMH minus DTT")
     fig.tight_layout()
     return fig
