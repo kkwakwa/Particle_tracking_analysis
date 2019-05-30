@@ -89,3 +89,16 @@ def plotspotstats(spotdata):
     plt.subplots_adjust(top=0.8)
     #plt.show()
     return f
+
+def plotspotpositions(spotdata):
+    '''
+    Takes a (standardised) Pandas dataframe of spot data and plots
+    positions of each individual spot on the final image. The idea is that 
+    quick insertions will mean less noise than lots of movement
+    '''
+    fig = plt.figure(figsize=(10,10))
+    ax1 = fig.add_subplot(1, 1, 1)
+    ax1.hist2d(spotdata['x'], spotdata['y'], bins=(500,500), cmap='Greys')
+    ax1.colorbar()
+    fig.tight_layout()
+    return fig
