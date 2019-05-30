@@ -25,7 +25,7 @@ def track_convert(filteredspots, dist=500):
     renamed to track that includes the track ID
     '''
     tracks = tp.link(filteredspots, search_range=dist, pos_columns=['x', 'y'],
-                     t_column='frame')
+                     memory=0, t_column='frame')
     tracks = tracks.rename(index=str, columns={'particle': 'track_no'})
     return tracks
 
@@ -240,6 +240,18 @@ def plot_msd_dist(tracks):
     return fig
 
 
+def plot_displacement_dist(tracks):
+    '''
+    Takes a standardised Pandas dataframe containing per-track information
+    and plots a histogram of the mean displacement distance
+    '''
+    fig = plt.figure(figsize=(10, 6))
+    plt.hist(tracks['mean_displacement'], bins=100, color='g', alpha=0.6, density=True)
+    plt.xlabel('Mean Displacement(nm)')
+    plt.tight_layout()
+    return fig
+
+
 def plot_msds(tracks, time=0.015):
     '''
     Takes a standardised Pandas dataframe containing per-track information and
@@ -263,7 +275,7 @@ def plot_msds(tracks, time=0.015):
 def plot_final_position_dist(tracks):
     '''
     Takes a standardised Pandas dataframe containing per-track information
-    and plots a histogram of the MSD
+    and plots a histogram of the insertion times
     '''
     inserttvals = tracks['insertion_time'].values
     inserttvals = inserttvals[~np.isnan(inserttvals)]
@@ -273,7 +285,7 @@ def plot_final_position_dist(tracks):
     ax1 = fig.add_subplot(1, 1, 1)
     ax1.hist(inserttvals, bins=50, color='b', alpha=0.3, density=True)
     ax1.set_xlabel('time to insertion(s)')
-    ax1.set_title('{:.2f}% tracks inserted'.format(insertion_ratio))
+    ax1.set_title('{:.1f}% tracks inserted, {:.3f} median insertion time'.format((1-insertion_ratio)*100, tracks['insertion_time'].median()))
     fig.tight_layout()
     return fig
 
@@ -295,5 +307,19 @@ def plot_final_positions(tracks, time=0.015):
     ax1.plot(*drawlines, color='0.6', linewidth=0.5, alpha=0.5)
     ax1.set_xlabel('time since appearance(s)')
     ax1.set_ylabel('Distance from final step($nm$)')
+    fig.tight_layout()
+    return fig
+
+def plot_displacement_time(tracks):
+    '''
+    Takes a standardised Pandas dataframe containing per-track information and
+    plots a 2D histogram with mean displacement on one axis and time on the
+    other
+    '''
+    fig = plt.figure(figsize=(10,3))
+    ax1 = fig.add_subplot(1, 1, 1)
+    ax1.hist2d(tracks['mean_displacement'], tracks['start_frame']*0.015, bins=(50,20), cmap='Greys', normed=True)
+    ax1.set_xlabel('mean displacement(nm)')
+    ax1.set_ylabel('time(s)')
     fig.tight_layout()
     return fig
