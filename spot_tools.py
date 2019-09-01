@@ -12,6 +12,7 @@ plotting out spot statistics
 
 #import numpy as np
 import pandas as pd
+import numpy as np
 import matplotlib.pyplot as plt
 
 
@@ -96,9 +97,17 @@ def plotspotpositions(spotdata):
     positions of each individual spot on the final image. The idea is that 
     quick insertions will mean less noise than lots of movement
     '''
-    fig = plt.figure(figsize=(10,10))
+    tracklengths = pd.value_counts(spotdata['track_no'])
+    segs = np.zeros((len(tracklengths), 2))
+    counter = 0
+    spotgroup = spotdata.groupby('track_no')
+    for name, group in spotgroup:
+        segs[counter,:] = group[['x','y']].iloc[-1,:].values
+        counter += 1
+    
+    fig = plt.figure(figsize=(12,10))
     ax1 = fig.add_subplot(1, 1, 1)
-    ax1.hist2d(spotdata['x'], spotdata['y'], bins=(500,500), cmap='Greys')
-    ax1.colorbar()
+    plt.hist2d(segs[:,0], segs[:,1], bins=(500,500), cmap='Greys')
+    plt.colorbar()
     fig.tight_layout()
     return fig
