@@ -33,8 +33,8 @@ def gaussian_fit_data(data):
 
         standard deviation = sqrt(wid/2)
     '''
-    hist, edges = np.histogram(data, bins=100, density=True)
+    hist, edges = np.histogram(data, bins=100)
     edges1 = edges[:-1] + np.diff(edges)[0]
-    init_vals = [.005, .005, 50, 250, 10, 10]  # for [amp1,amp2, cen1, cen2, wid1, wid2]
+    init_vals = [.5, .5, 50, 250, 10, 10]  # for [amp1,amp2, cen1, cen2, wid1, wid2]
     best_vals, covar = curve_fit(doublegaussian, edges1, hist, p0=init_vals)
     return best_vals
