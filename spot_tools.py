@@ -33,6 +33,24 @@ def readThunderStorm(filename):
     return spotdata
 
 
+def readThunderStorm_phasor(filename):
+    '''
+    Takes a string that represents the path to a ThunderSTORM file and returns
+    a Pandas dataframe that contains the most important parts of the dataframe
+    using a standardised header format
+    '''
+    spotdata = pd.read_csv(filename, index_col=0, usecols=['id', 'frame', 'x [nm]',
+                                                           'y [nm]', 'sigma1 [nm]',
+                                                           'sigma2 [nm]',
+                                                           'intensity [photon]'])
+    spotdata = spotdata.rename(index=str, columns={'x [nm]':'x', 'y [nm]':'y',
+                                                   'sigma1 [nm]': 'sigma1',
+                                                   'sigma2 [nm]': 'sigma2',
+                                                   'intensity [photon]':'intensity',
+                                                   'uncertainty_xy [nm]':'uncertainty'})
+    return spotdata
+
+
 def filter_spots(spotdata, sigma_min=50, sigma_max=250, unc_min=5, unc_max=65):
     '''
     Takes a (hopefully standardised) Pandas dataframe of spot data and returns
@@ -42,6 +60,18 @@ def filter_spots(spotdata, sigma_min=50, sigma_max=250, unc_min=5, unc_max=65):
                                  (spotdata['sigma'] < sigma_max) &
                                  (spotdata['uncertainty'] > unc_min) &
                                  (spotdata['uncertainty'] < unc_max)]
+    return(filteredspots)
+
+
+def filter_spots_phasor(spotdata, sigma_min=0.5, sigma_max=3.0):
+    '''
+    Takes a (hopefully standardised) Pandas dataframe of spot data and returns
+    it filtered by sigma and uncertainty.
+    '''
+    filteredspots = spotdata.loc[(spotdata['sigma1'] > sigma_min) &
+                                 (spotdata['sigma1'] < sigma_max) &
+                                 (spotdata['sigma2'] > sigma_min) &
+                                 (spotdata['sigma2'] < sigma_max)]
     return(filteredspots)
 
 
@@ -94,7 +124,7 @@ def plotspotstats(spotdata):
 def plotspotpositions(spotdata):
     '''
     Takes a (standardised) Pandas dataframe of spot data and plots
-    positions of each individual spot on the final image. The idea is that 
+    positions of each individual spot on the final image. The idea is that
     quick insertions will mean less noise than lots of movement
     '''
     tracklengths = pd.value_counts(spotdata['track_no'])
@@ -104,7 +134,7 @@ def plotspotpositions(spotdata):
     for name, group in spotgroup:
         segs[counter,:] = group[['x','y']].iloc[-1,:].values
         counter += 1
-    
+
     fig = plt.figure(figsize=(12,10))
     ax1 = fig.add_subplot(1, 1, 1)
     plt.hist2d(segs[:,0], segs[:,1], bins=(500,500), cmap='Greys')
