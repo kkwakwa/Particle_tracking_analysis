@@ -15,17 +15,17 @@ There are a couple of different things I am going to be trying do with this pack
   This data will be used to:
 
     1. calculate important statistics on spots, individual tracks and track aggregates
-      * #### per- track
+      * **per- track**
         * Mean displacement
         * Mean Square Deviation
         * Goodness of fit for MSD
 
-      * ### per-segment
+      * **per-segment**
         * x-displacement
         * y-displacement
         * r-displacement
 
-      * ### Per-spot
+      * **Per-spot**
         * Intensity
 
     1. Identify merge points from Trackmate/bayesian  data
