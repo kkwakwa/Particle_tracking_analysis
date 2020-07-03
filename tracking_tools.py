@@ -16,7 +16,7 @@ import trackpy as tp
 from scipy.stats import linregress
 
 
-def track_convert(filteredspots, dist=500):
+def track_convert(filteredspots, dist=500, memory=0):
     '''
     Takes a (hopefully standardised) Pandas dataframe of spot data and passes
     it to trackpy for spot linking. The dist option defines the maximum
@@ -25,7 +25,7 @@ def track_convert(filteredspots, dist=500):
     renamed to track that includes the track ID
     '''
     tracks = tp.link(filteredspots, search_range=dist, pos_columns=['x', 'y'],
-                     memory=0, t_column='frame')
+                     memory=memory, t_column='frame')
     tracks = tracks.rename(index=str, columns={'particle': 'track_no'})
     return tracks
 
