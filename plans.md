@@ -10,7 +10,7 @@ There are a couple of different things I am going to be trying do with this pack
   * Trackmate
   * Alan's Bayesian single particle software
   * Alan's Matlabtrack implimentation
-  * Trackpy
+  * ~~Trackpy~~
 
   This data will be used to:
 
